@@ -1,0 +1,145 @@
+import SwiftUI
+
+struct ChildPathView: View {
+    let levels = Array(1...15)
+    @State private var selectedLevel: Int? = nil
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                // 🌿 Фон
+                LinearGradient(colors: [Color.cyan.opacity(0.6), Color.green.opacity(0.4)],
+                               startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+
+                // 🌱 Кустики
+                ForEach(0..<25, id: \.self) { _ in
+                    Image(systemName: "leaf.fill")
+                        .resizable()
+                        .frame(width: CGFloat.random(in: 18...36),
+                               height: CGFloat.random(in: 18...36))
+                        .foregroundColor(Color.green.opacity(Double.random(in: 0.35...0.8)))
+                        .rotationEffect(.degrees(Double.random(in: 0...360)))
+                        .position(x: CGFloat.random(in: 24...350),
+                                  y: CGFloat.random(in: 40...2200))
+                        .opacity(0.8)
+                }
+
+                // 📜 Прокручиваемая карта
+                ScrollView(.vertical, showsIndicators: false) {
+                    ZStack(alignment: .top) {
+                        // 🛣️ Тропинка
+                        PathView()
+                            .stroke(
+                                LinearGradient(colors: [Color.brown, Color.orange],
+                                               startPoint: .top,
+                                               endPoint: .bottom),
+                                style: StrokeStyle(lineWidth: 8, lineCap: .round, lineJoin: .round)
+                            )
+                            .frame(height: 2400)
+                            .opacity(0.9)
+
+                        // 🏠 Уровни (домики)
+                        ForEach(levels, id: \.self) { level in
+                            let pos = PathView.levelPosition(level)
+
+                            NavigationLink(destination: destinationView(for: level)) {
+                                LevelMarkerView(level: level)
+                                    .position(pos)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .frame(height: 2400)
+                }
+            }
+            .navigationTitle("Карта ученика")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    // MARK: — выбор экрана в зависимости от уровня
+    @ViewBuilder
+    func destinationView(for level: Int) -> some View {
+        switch level {
+        case 1: Lesson1View()
+        case 2: Lesson2View()
+        case 3: Lesson3View()
+        case 4: Lesson4View()
+        case 5: Lesson5View()
+        case 6: Lesson6View()
+        case 7: Lesson7View()
+        case 8: Lesson8View()
+        case 9: Lesson9View()
+        case 10: Lesson10View()
+        case 11: Lesson11View()
+        case 12: Lesson12View()
+        case 13: Lesson13View()
+        case 14: Lesson14View()
+        case 15: Lesson15View()
+        default:
+            LessonTemplateView(level: level,
+                               title: "Урок \(level)",
+                               description: "Описание для уровня \(level)")
+        }
+    }
+}
+
+// MARK: — маркер уровня (домик)
+struct LevelMarkerView: View {
+    let level: Int
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(colors: [Color.yellow, Color.orange],
+                                       startPoint: .topLeading,
+                                       endPoint: .bottomTrailing)
+                    )
+                    .frame(width: 64, height: 64)
+                    .shadow(radius: 6)
+                    .overlay(Circle().stroke(Color.white, lineWidth: 3))
+                Image(systemName: "house.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 30, height: 30)
+                    .foregroundColor(.white)
+            }
+            Text("Ур. \(level)")
+                .font(.caption2.bold())
+                .foregroundColor(.brown)
+        }
+    }
+}
+
+// MARK: — Тропинка и вычисление позиций
+struct PathView: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: 40))
+
+        let steps = 15
+        let spacing = rect.height / CGFloat(steps + 1)
+
+        for i in 0..<steps {
+            let y = spacing * CGFloat(i + 1)
+            let x = (i % 2 == 0) ? rect.width * 0.75 : rect.width * 0.25
+            path.addLine(to: CGPoint(x: x, y: y))
+        }
+
+        return path
+    }
+
+    static func levelPosition(_ level: Int) -> CGPoint {
+        let steps = 15
+        let spacing: CGFloat = 2400 / CGFloat(steps + 1)
+        let idx = max(0, min(level - 1, steps - 1))
+        let y = spacing * CGFloat(idx + 1)
+        let x = (idx % 2 == 0)
+            ? (UIScreen.main.bounds.width * 0.75)
+            : (UIScreen.main.bounds.width * 0.25)
+        let clampedX = max(40, min(x, UIScreen.main.bounds.width - 40))
+        return CGPoint(x: clampedX, y: y)
+    }
+}
